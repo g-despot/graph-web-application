@@ -1,5 +1,4 @@
 version: "3"
-
 services:
   server:
     build: .
@@ -10,7 +9,6 @@ services:
     environment:
       MEMGRAPH_HOST: memgraph
       MEMGRAPH_PORT: "7687"
-      PATH_TO_INPUT_FILE: "/usr/lib/memgraph/import-data/friendship_network.csv"
     depends_on:
       - memgraph
 

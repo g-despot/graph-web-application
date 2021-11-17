@@ -14,9 +14,10 @@ log = logging.getLogger(__name__)
 def init_log():
     logging.basicConfig(level=logging.DEBUG)
     log.info("Logging enabled")
+    # Set the log level for werkzeug to WARNING because it will print out too much info otherwise
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
-
+# Parse the input arguments for the app
 def parse_args():
     """
     Parse command line arguments.
@@ -35,6 +36,7 @@ def parse_args():
 args = parse_args()
 memgraph = None
 
+# Create the Flask server instance
 app = Flask(
     __name__,
     template_folder=args.template_folder,
@@ -56,13 +58,13 @@ def load_data(path_to_input_file):
             for line in file:
                 memgraph.execute(line)
     except Exception as e:
-        log.info(f"Data loading error: {e}")
+        log.info(f"Data import error: {e}")
 
 
 def get_graph():
     results = memgraph.execute_and_fetch(
-        f"""MATCH (c1:Character)-[k:KILLED]-(c2:Character)
-                RETURN c1 as from, c2 AS to
+        f"""MATCH (n:Character)-[:KILLED]-(m:Character)
+                RETURN n as from, m AS to
                 LIMIT 100;"""
     )
     return list(results)
@@ -74,7 +76,8 @@ def get_data():
     try:
         results = get_graph()
 
-        # Set for quickly check if we have already added the node or the edge
+        # Sets for quickly checking if we have already added the node or edge
+        # We don't want to send duplicates to the frontend
         nodes_set = set()
         links_set = set()
         for result in results:
@@ -100,13 +103,14 @@ def get_data():
         log.info(f"Data loading error: {e}")
         return ("", 500)
 
-
+# Retrieve the home page for the app
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
-
+# Entrypoint for the app that will be executed first
 def main():
+    # Code that should only be run once
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         init_log()
         global memgraph
